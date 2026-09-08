@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Silobolsas: de residuo a recurso</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg-deep:   #262B1E;
+    --surface:   #EFE7D2;
+    --text-dark: #262B1E;
+    --text-light:#F2ECD9;
+    --gold:      #C79A3B;
+    --teal:      #3E6B6B;
+    --cordoba:   #fb8c00;
+    --baires:    #1e88e5;
+    --santafe:   #e91e63;
+  }
+
+  *{ box-sizing:border-box; }
+
+  body{
+    margin:0;
+    background:var(--bg-deep);
+    color:var(--text-light);
+    font-family:'Segoe UI', system-ui, -apple-system, sans-serif;
+    line-height:1.5;
+  }
+
+  .wrap{
+    max-width:1100px;
+    margin:0 auto;
+    padding:0 24px 64px 24px;
+  }
+
+  /* ---------- Encabezado: franja tipo "vista satelital" ---------- */
+  .hero{
+    margin:0 -24px 0 -24px;
+    padding:56px 24px 44px 24px;
+    background:
+      linear-gradient(115deg, rgba(38,43,30,0.55), rgba(38,43,30,0.15) 55%),
+      linear-gradient(100deg, #3d4a2c 0%, #5c6b3a 35%, #7a8f4a 60%, #3e6b6b 100%);
+    border-bottom:3px solid var(--gold);
+  }
+
+  .hero h1{
+    font-family:Georgia, 'Times New Roman', serif;
+    font-weight:700;
+    font-size:clamp(2rem, 4.2vw, 3.1rem);
+    margin:0 0 10px 0;
+    max-width:16ch;
+    color:var(--text-light);
+  }
+
+  .hero p{
+    max-width:62ch;
+    font-size:1.05rem;
+    color:#e7e2cf;
+    margin:0;
+  }
+
+  /* ---------- Divisor con forma de silobolsa ---------- */
+  .tie-divider{
+    height:14px;
+    margin:40px 0;
+    border-radius:999px;
+    background:var(--gold);
+    position:relative;
+  }
+  .tie-divider::before, .tie-divider::after{
+    content:"";
+    position:absolute;
+    top:-4px;
+    width:10px;
+    height:22px;
+    border-radius:6px;
+    background:var(--bg-deep);
+  }
+  .tie-divider::before{ left:18px; }
+  .tie-divider::after{ right:18px; }
+
+  section h2{
+    font-family:Georgia, 'Times New Roman', serif;
+    font-size:1.5rem;
+    font-weight:700;
+    color:var(--text-light);
+    margin:0 0 6px 0;
+  }
+  section .lead{
+    color:#cfc9b3;
+    margin:0 0 20px 0;
+    max-width:70ch;
+    font-size:0.96rem;
+  }
+
+  /* ---------- Panel del mapa ---------- */
+  .map-panel{
+    border:1px solid var(--gold);
+    border-radius:8px;
+    overflow:hidden;
+    box-shadow:0 12px 30px rgba(0,0,0,0.35);
+  }
+  .map-panel iframe{
+    width:100%;
+    height:560px;
+    border:none;
+    display:block;
+    background:#1c231a;
+  }
+  .map-note{
+    font-size:0.82rem;
+    color:#a9a48f;
+    margin-top:10px;
+  }
+
+  /* ---------- KPIs con forma de cápsula (silobolsa) ---------- */
+  .kpi-row{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    margin-bottom:28px;
+  }
+  .kpi-pill{
+    display:flex;
+    align-items:center;
+    gap:18px;
+    background:var(--surface);
+    color:var(--text-dark);
+    border-radius:999px;
+    padding:14px 26px;
+    border-left:14px solid var(--pill-color, var(--gold));
+  }
+  .kpi-pill .valor{
+    font-family:Georgia, 'Times New Roman', serif;
+    font-weight:700;
+    font-size:1.9rem;
+    min-width:88px;
+  }
+  .kpi-pill .etiqueta{
+    font-size:0.95rem;
+    color:#4a4536;
+  }
+
+  /* ---------- Bloque de gráfico ---------- */
+  .chart-panel{
+    background:var(--surface);
+    border-radius:8px;
+    padding:20px 22px 10px 22px;
+  }
+  .chart-panel h3{
+    font-family:Georgia, serif;
+    color:var(--text-dark);
+    margin:0 0 4px 0;
+    font-size:1.1rem;
+  }
+  .chart-panel .sub{
+    color:#5b5642;
+    font-size:0.85rem;
+    margin:0 0 14px 0;
+  }
+  .chart-box{
+    height:260px;
+  }
+
+  .dashboard-grid{
+    display:grid;
+    grid-template-columns: 1fr 1.3fr;
+    gap:28px;
+    align-items:start;
+  }
+  @media (max-width: 760px){
+    .dashboard-grid{ grid-template-columns: 1fr; }
+    .map-panel iframe{ height:420px; }
+  }
+
+  footer{
+    margin-top:48px;
+    padding-top:18px;
+    border-top:1px solid #454f36;
+    font-size:0.82rem;
+    color:#8d8870;
+  }
+</style>
+</head>
+<body>
+
+  <div class="hero">
+    <div class="wrap" style="padding:0;">
+      <h1>Silobolsas: de residuo a recurso</h1>
+      <p>Argentina es el mayor productor mundial de silobolsas, y buena parte de ese plástico termina abandonado o quemado a cielo abierto en el campo, contaminando suelo y agua. Este dashboard reúne el mapa interactivo de la red real de acopio para reciclarlas junto con los indicadores clave de su cobertura actual.</p>
+    </div>
+  </div>
+
+  <div class="wrap">
+
+    <div class="tie-divider"></div>
+
+    <section>
+      <h2>Mapa interactivo</h2>
+      <p class="lead">Centros de acopio reales, su radio de cobertura estimado y el área de estudio del corredor pampeano. Usá el ícono de capas (abajo a la derecha) para prender y apagar cada elemento.</p>
+      <div class="map-panel">
+        <iframe src="index.html" title="Mapa interactivo de acopio de silobolsas"></iframe>
+      </div>
+      <p class="map-note">Este archivo debe estar en la misma carpeta/repositorio que <code>index.html</code> (tu mapa ya publicado) para que se vea embebido arriba.</p>
+    </section>
+
+    <div class="tie-divider"></div>
+
+    <section>
+      <h2>Indicadores clave</h2>
+      <p class="lead">Resumen numérico de la red relevada, a partir de los datos reales de centros de acopio (Siclo Rural).</p>
+
+      <div class="dashboard-grid">
+        <div class="kpi-row">
+          <div class="kpi-pill" style="--pill-color:var(--cordoba);">
+            <div class="valor">5</div>
+            <div class="etiqueta">Centros de acopio<br>activos relevados</div>
+          </div>
+          <div class="kpi-pill" style="--pill-color:var(--baires);">
+            <div class="valor">3</div>
+            <div class="etiqueta">Provincias con<br>al menos un centro</div>
+          </div>
+          <div class="kpi-pill" style="--pill-color:var(--santafe);">
+            <div class="valor">80&nbsp;km</div>
+            <div class="etiqueta">Radio de cobertura<br>estimado por centro</div>
+          </div>
+        </div>
+
+        <div class="chart-panel">
+          <h3>Centros de acopio por provincia</h3>
+          <p class="sub">Misma paleta de colores que el mapa, para poder cruzar ambas vistas.</p>
+          <div class="chart-box">
+            <canvas id="chartProvincia"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      Datos de centros de acopio: relevamiento propio a partir del sitio oficial de Siclo Rural (sección "Acopio"). Radio de cobertura estimado con fines ilustrativos, no es un dato oficial de la empresa.
+    </footer>
+
+  </div>
+
+<script>
+  const ctx = document.getElementById('chartProvincia');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Córdoba', 'Buenos Aires', 'Santa Fe'],
+      datasets: [{
+        data: [1, 3, 1],
+        backgroundColor: ['#fb8c00', '#1e88e5', '#e91e63'],
+        borderRadius: 6,
+        maxBarThickness: 70
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { stepSize: 1, color: '#4a4536' },
+          grid: { color: '#ddd6bd' }
+        },
+        x: {
+          ticks: { color: '#4a4536' },
+          grid: { display: false }
+        }
+      }
+    }
+  });
+</script>
+
+</body>
+</html>
